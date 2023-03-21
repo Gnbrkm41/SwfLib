@@ -34,7 +34,7 @@ namespace SwfLib {
 
         public SwfTagBase ReadTag(SwfTagData tagData) {
             var stream = new MemoryStream(tagData.Data);
-            var reader = new SwfStreamReader(stream);
+            var reader = new SwfStreamReader(stream, _file.FileInfo.Version > 5);
             var type = tagData.Type;
             return ReadTag(type, reader);
         }

@@ -167,6 +167,11 @@
         ImplementsOp = 0x2c,
 
         /// <summary>
+        /// Executes the external command passing on parameters. The external command is likely a JavaScript function.
+        /// </summary>
+        FSCommand2 = 0x2d,
+
+        /// <summary>
         /// ActionStringLess tests to see if a string is less than another string 
         /// </summary>
         StringLess = 0x29,

@@ -131,13 +131,14 @@ namespace SwfLib {
         }
 
         protected static ISwfStreamReader GetSwfStreamReader(SwfFileInfo info, Stream stream) {
+            bool supportsUnicode = info.Version > 5;
             if (info.Format == SwfFormat.FWS) {
-                return new SwfStreamReader(stream);
+                return new SwfStreamReader(stream, supportsUnicode);
             }
 
             MemoryStream memoryStream = new MemoryStream();
             SwfZip.Decompress(stream, memoryStream, info.Format);
-            return new SwfStreamReader(memoryStream);
+            return new SwfStreamReader(memoryStream, supportsUnicode);
         }
 
     }

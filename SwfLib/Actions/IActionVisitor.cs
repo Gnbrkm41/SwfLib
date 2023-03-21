@@ -846,6 +846,18 @@
 
         #endregion
 
+        #region Flash Lite 4
+
+        /// <summary>
+        /// Visits FSCommand2 action.
+        /// </summary>
+        /// <param name="action">Action to be visitied</param>
+        /// <param name="arg">Additional </param>
+        /// <returns></returns>
+        TResult Visit(ActionFSCommand2 action, TArg arg);
+
+        #endregion
+
         /// <summary>
         /// Visits End action.
         /// </summary>

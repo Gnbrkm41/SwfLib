@@ -7,9 +7,14 @@ using System.Text;
 namespace SwfLib {
     public class SwfStreamReader : ISwfStreamReader {
 
+        static SwfStreamReader()
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        }
+
         private readonly BinaryReader _reader;
         private readonly Stream _baseStream;
-        
+        private readonly bool _isUnicode;
 
         public bool IsEOF {
             get { return _reader.BaseStream.Position == _reader.BaseStream.Length; }
@@ -17,10 +22,11 @@ namespace SwfLib {
 
         public long Position { get { return _reader.BaseStream.Position; } }
 
-        public SwfStreamReader(Stream stream)
+        public SwfStreamReader(Stream stream, bool isUnicode = true)
         {
             _reader = new BinaryReader(stream);
             _baseStream = stream;
+            _isUnicode = isUnicode;
         }
 
         //TODO: Why unsigned
@@ -113,7 +119,11 @@ namespace SwfLib {
             while ((bt = _reader.ReadByte()) > 0) {
                 if (bt > 0) dataStream.WriteByte(bt);
             }
-            return Encoding.UTF8.GetString(dataStream.ToArray());
+            if (_isUnicode)
+            {
+                return Encoding.UTF8.GetString(dataStream.ToArray());
+            }
+            return Encoding.GetEncoding("Shift_JIS").GetString(dataStream.ToArray());
         }
 
         public virtual float ReadSingle() {

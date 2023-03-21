@@ -566,6 +566,14 @@ namespace SwfLib.Actions {
 
         #endregion
 
+        #region Flash Lite
+        ActionBase IActionVisitor<ushort, ActionBase>.Visit(ActionFSCommand2 action, ushort length)
+        {
+            return action;
+        }
+
+        #endregion
+
         ActionBase IActionVisitor<ushort, ActionBase>.Visit(ActionUnknown action, ushort length) {
             action.Data = _reader.ReadBytes(length);
             return action;

@@ -23,7 +23,7 @@ namespace SwfLib.Actions {
                 if (rest != null) {
                     _writer.WriteBytes(rest);
                 }
-#if DEBUG
+#if DEBUGFUCKYOU
             } else {
                 action.AcceptVisitor(this, null);
 #endif
@@ -574,6 +574,11 @@ namespace SwfLib.Actions {
                 aw.WriteAction(action);
             }
             return mem.ToArray();
+        }
+
+        public object Visit(ActionFSCommand2 action, ISwfStreamWriter arg)
+        {
+            return null;
         }
     }
 }

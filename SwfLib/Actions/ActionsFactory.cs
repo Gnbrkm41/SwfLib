@@ -279,6 +279,11 @@
 
                 #endregion
 
+                #region Flash Lite
+                case ActionCode.FSCommand2:
+                    return new ActionFSCommand2();
+                #endregion 
+
                 case ActionCode.End:
                     return new ActionEnd();
                 default:
