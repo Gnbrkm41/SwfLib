@@ -1,12 +1,47 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.IO;
+using System.Text;
 
 namespace SwfLib.Actions {
     public class ActionReader : IActionVisitor<ushort, ActionBase> {
 
         private readonly ISwfStreamReader _reader;
         private readonly ActionsFactory _factory;
+        // When converting Shift-JIS to UTF-8, strings may have different length
+        // This needs to be considered for relative jump addresses.
+        private int _currentAddress;
+        private readonly List<(ActionBase JumpAction, int Location, int Target)> _jumps = new();
+        
+        // This only handles forward jumps, because with a single pass we can't really check backward jumps
+        // Should be fine for our purposes, *hopefully*
+        private void UpdateBranches(short offset)
+        {
+            int currentAddress = _currentAddress;
+            int i = 0;
+            while (i < _jumps.Count)
+            {
+                (ActionBase jumpInstruction, int location, int target) = _jumps[i];
+                if (location < currentAddress && currentAddress < target) // The string is between jumps
+                {
+                    switch (jumpInstruction)
+                    {
+                        case ActionIf actionIf:
+                            actionIf.BranchOffset += offset;
+                            break;
+                        case ActionJump actionJump:
+                            actionJump.BranchOffset += offset;
+                            break;
+                    }
+                    i++;
+                }
+                else
+                { 
+                    _jumps.RemoveAt(0);
+                }
+            }
+        }
 
         public ActionReader(ISwfStreamReader reader) {
             _reader = reader;
@@ -14,6 +49,7 @@ namespace SwfLib.Actions {
         }
 
         public ActionBase ReadAction() {
+            _currentAddress = (int)_reader.Position;
             var code = (ActionCode)_reader.ReadByte();
             ushort length = (byte)code >= 0x80 ? _reader.ReadUInt16() : (ushort)0;
             var action = _factory.Create(code);
@@ -155,6 +191,16 @@ namespace SwfLib.Actions {
                 switch (type) {
                     case ActionPushItemType.String:
                         item.String = _reader.ReadString();
+                        int utfByteCount = Encoding.UTF8.GetByteCount(item.String);
+                        if (utfByteCount != item.String.Length)
+                        {
+                            int jisByteCount = Encoding.GetEncoding("Shift_JIS").GetByteCount(item.String);
+                            int diff = utfByteCount - jisByteCount;
+                            if (diff != 0)
+                            {
+                                UpdateBranches((short)diff);
+                            }
+                        }
                         break;
                     case ActionPushItemType.Float:
                         item.Float = _reader.ReadSingle();
@@ -215,11 +261,13 @@ namespace SwfLib.Actions {
 
         ActionBase IActionVisitor<ushort, ActionBase>.Visit(ActionIf action, ushort length) {
             action.BranchOffset = _reader.ReadSInt16();
+            _jumps.Add((action, _currentAddress, _currentAddress + action.BranchOffset));
             return action;
         }
 
         ActionBase IActionVisitor<ushort, ActionBase>.Visit(ActionJump action, ushort length) {
             action.BranchOffset = _reader.ReadSInt16();
+            _jumps.Add((action, _currentAddress, _currentAddress + action.BranchOffset));
             return action;
         }
 
